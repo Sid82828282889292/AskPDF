@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+.env.*
+
+# VS Code config
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# MacOS/Linux/Windows system files
+.DS_Store
+Thumbs.db
+
+# Caches and logs
+cached/
+logs/
+*.log
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+
+# OS-specific
+ehthumbs.db
+Icon?
+desktop.ini
+
+# PyMuPDF (fitz) artifacts (if any)
+*.xoj
+*.pymupdf-cache/
+
+# PDF chunks or intermediate files (optional)
+*.pkl
+*.pdf.chunked.txt
+*.pdf.extracted.txt
+
+# HuggingFace model/token cache (optional)
+~/.huggingface/
