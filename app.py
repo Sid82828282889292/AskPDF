@@ -2,26 +2,32 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from io import BytesIO
+
+from utils.auth import check_auth
 from utils.pdf_loader import load_pdf_text
 from utils.chunk_embed import embed_and_store_chunks
 from utils.qa_chain import create_qa_chain
 from utils.cache_utils import get_file_hash, load_vectorstore, save_vectorstore
 
-# Load .env
+# 🔐 Authenticate user first
+if not check_auth():
+    st.stop()
+
+# 🔧 Load environment variables
 load_dotenv()
 
-# Page config
-st.set_page_config(page_title="PDFQueryAI", layout="wide")
-st.title("📄 PDF Query AI — Ask Questions From PDFs")
-
-# Session states
+# 🧠 Session States
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = None
 
-# Upload PDFs
+# 🖥️ Page Config
+st.set_page_config(page_title="PDFQueryAI", layout="wide")
+st.title("📄 PDF Query AI — Ask Questions From PDFs")
+
+# 📎 Upload PDFs
 uploaded_files = st.file_uploader("Upload one or more PDF files", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
@@ -30,15 +36,14 @@ if uploaded_files:
 
     for uploaded_file in uploaded_files:
         file_bytes = uploaded_file.read()
-        uploaded_file.seek(0)  # reset pointer
+        uploaded_file.seek(0)  # Reset stream
         file_hash = get_file_hash(file_bytes)
         combined_hash += file_hash
         all_text += load_pdf_text(uploaded_file) + "\n"
 
-    # Vector DB cache path
+    # 🗃️ Vector DB Cache
     cache_path = os.path.join("cached", combined_hash)
 
-    # Load or create vectorstore
     vectordb = load_vectorstore(combined_hash)
     if vectordb:
         st.success("✅ Loaded cached vector DB")
@@ -48,10 +53,10 @@ if uploaded_files:
         save_vectorstore(combined_hash, vectordb)
         st.success("✅ Vector DB created and cached!")
 
-    # Create QA chain
+    # 🤖 Create QA Chain
     st.session_state.qa_chain = create_qa_chain(vectordb)
 
-# Query input
+# ❓ Query
 if st.session_state.qa_chain:
     query = st.text_input("Ask a question about the documents:")
 
@@ -67,11 +72,11 @@ if st.session_state.qa_chain:
         st.markdown("### 🤖 Answer")
         st.markdown(answer)
 
-        # Update chat history
+        # 🧠 Save history
         st.session_state.chat_history.append(("You", query))
         st.session_state.chat_history.append(("AI", answer))
 
-        # Show source chunks
+        # 🧾 Show source chunks
         if sources:
             st.markdown("## 📚 Source Chunks Used")
             col1, col2 = st.columns(2)
@@ -87,7 +92,7 @@ if st.session_state.qa_chain:
                     st.markdown(f"**Chunk {i+1}:**")
                     st.code(doc.page_content.strip(), language="text")
 
-# Chat history viewer + download
+# 💾 Chat History Viewer
 if st.session_state.chat_history:
     with st.expander("🧠 Chat History"):
         for speaker, msg in st.session_state.chat_history:
