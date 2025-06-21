@@ -1,6 +1,6 @@
 # 🤖 Y_PDF — Chat with Your Documents
 
-AskPDF lets you upload and intelligently query one or more PDF documents using natural language.  
+Y_PDF lets you upload and intelligently query one or more PDF documents using natural language.  
 Built using **LangChain**, **HuggingFace LLMs**, and **Chroma**, it brings contextual question-answering to your local documents — no OpenAI key needed!
 
 ---
@@ -33,5 +33,5 @@ Built using **LangChain**, **HuggingFace LLMs**, and **Chroma**, it brings conte
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/Sid82828282889292/AskPDF.git
-cd AskPDF
+git clone https://github.com/Sid82828282889292/Y_PDF.git
+cd Ypdf
