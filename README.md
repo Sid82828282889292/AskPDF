@@ -1,4 +1,4 @@
-# 🤖 AskPDF — Chat with Your Documents
+# 🤖 Y_PDF — Chat with Your Documents
 
 AskPDF lets you upload and intelligently query one or more PDF documents using natural language.  
 Built using **LangChain**, **HuggingFace LLMs**, and **Chroma**, it brings contextual question-answering to your local documents — no OpenAI key needed!
