@@ -1,6 +1,5 @@
 # import streamlit as st
 # import os
-# import tempfile
 # from utils import auth, pdf_loader, chunk_embed, cache_utils, qa_chain
 # from langchain_community.vectorstores import Chroma
 
@@ -13,7 +12,7 @@
 
 # # Initialize session state
 # if "pdfs" not in st.session_state:
-#     st.session_state.pdfs = {}  # {hash -> {name, path}}
+#     st.session_state.pdfs = {}
 
 # uploaded_file = st.file_uploader("📤 Upload a PDF", type="pdf")
 
@@ -23,14 +22,12 @@
 #     persist_path = os.path.join("cached", file_hash)
 
 #     if file_hash not in st.session_state.pdfs:
-#         # Save to disk
 #         save_path = os.path.join("cached", f"{file_hash}.pdf")
 #         with open(save_path, "wb") as f:
 #             f.write(file_bytes)
 
-#         # Extract and embed
 #         text = pdf_loader.extract_text_from_pdf(save_path)
-#         vectorstore = chunk_embed.embed_and_store_chunks(text, persist_path)
+#         chunk_embed.embed_and_store_chunks(text, persist_path)
 
 #         st.session_state.pdfs[file_hash] = {
 #             "name": uploaded_file.name,
@@ -49,10 +46,8 @@
 #     )
 
 #     vectorstore = cache_utils.load_vectorstore(selected_key)
-
 #     question = st.text_input("🔍 Ask a question about this PDF")
 
-#     # Toggle for retrieval mode
 #     use_llm = st.toggle("💡 Use AI to summarize (LLM)", value=False)
 
 #     if question:
@@ -64,10 +59,8 @@
 #         st.markdown("### ✅ Answer")
 #         st.write(answer)
 
-#         # Highlight based on top relevant phrase
 #         highlight = answer.split("\n")[0][:50].strip().replace(" ", "+")
 #         viewer_url = f"static/pdfjs/viewer.html?file=../../../cached/{selected_key}.pdf&highlight={highlight}"
-
 #         st.markdown(f"[📄 View PDF with Highlight]({viewer_url})", unsafe_allow_html=True)
 
 
@@ -83,7 +76,7 @@ if not auth.check_auth():
 
 st.title("📄 Smart PDF Query App")
 
-# Initialize session state
+# Session for PDF list
 if "pdfs" not in st.session_state:
     st.session_state.pdfs = {}
 
@@ -109,7 +102,7 @@ if uploaded_file:
 
     st.success(f"✅ Uploaded and indexed: {uploaded_file.name}")
 
-# PDF selection
+# PDF selector
 pdf_options = list(st.session_state.pdfs.items())
 if pdf_options:
     selected_key, selected_pdf = st.selectbox(
@@ -121,17 +114,24 @@ if pdf_options:
     vectorstore = cache_utils.load_vectorstore(selected_key)
     question = st.text_input("🔍 Ask a question about this PDF")
 
-    use_llm = st.toggle("💡 Use AI to summarize (LLM)", value=False)
+    # Retrieval Mode
+    mode = st.radio("🧠 Choose Answer Mode:", ["Raw Chunk", "Polished Chunk", "AI Summarized"])
 
     if question:
-        if use_llm:
+        if mode == "Raw Chunk":
+            answer = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+        elif mode == "Polished Chunk":
+            raw = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+            answer = qa_chain.polish_with_llm(raw, question)
+        elif mode == "AI Summarized":
             answer = qa_chain.query_pdf_with_llm(vectorstore, question)
         else:
-            answer = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+            answer = "Invalid mode selected."
 
         st.markdown("### ✅ Answer")
         st.write(answer)
 
+        # PDF highlight
         highlight = answer.split("\n")[0][:50].strip().replace(" ", "+")
         viewer_url = f"static/pdfjs/viewer.html?file=../../../cached/{selected_key}.pdf&highlight={highlight}"
         st.markdown(f"[📄 View PDF with Highlight]({viewer_url})", unsafe_allow_html=True)
