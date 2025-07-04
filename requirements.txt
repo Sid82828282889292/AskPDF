@@ -1,7 +1,22 @@
+# streamlit
+# langchain
+# langchain-community
+# chromadb
+# PyMuPDF
+# tiktoken
+# sentence-transformers
+# huggingface_hub>=0.20.0
+# langchain>=0.1.0
+
+
 streamlit
+python-dotenv
 langchain
-langchain-community
 chromadb
-PyMuPDF
-tiktoken
 sentence-transformers
+scikit-learn
+PyMuPDF
+uvicorn
+fastapi
+transformers
+torch

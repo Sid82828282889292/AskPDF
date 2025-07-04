@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF Viewer with Highlight</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #pdf-container {
+      height: 100vh;
+      overflow-y: auto;
+      background: #1e1e1e;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto 20px;
+      background: #fff;
+    }
+    .highlight {
+      background-color: yellow !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const fileUrl = params.get("file");
+    const highlightQuery = params.get("highlight");
+
+    const container = document.getElementById("pdf-container");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.js";
+
+    async function renderPDF(url, highlightText) {
+      const loadingTask = pdfjsLib.getDocument(url);
+      const pdf = await loadingTask.promise;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.4 });
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render the page
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+
+        // Render text layer for search highlight
+        const textContent = await page.getTextContent();
+        const textLayerDiv = document.createElement("div");
+        textLayerDiv.style.position = "absolute";
+        textLayerDiv.style.top = "0";
+        textLayerDiv.style.left = "0";
+        textLayerDiv.style.height = canvas.height + "px";
+        textLayerDiv.style.width = canvas.width + "px";
+        textLayerDiv.style.pointerEvents = "none";
+        textLayerDiv.style.zIndex = "2";
+
+        const textLayer = new pdfjsLib.renderTextLayer({
+          textContent,
+          container: textLayerDiv,
+          viewport,
+          textDivs: []
+        });
+
+        await textLayer.render();
+
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+        wrapper.appendChild(canvas);
+        wrapper.appendChild(textLayerDiv);
+
+        container.appendChild(wrapper);
+
+        // Try highlight
+        if (highlightText) {
+          const lower = highlightText.toLowerCase();
+          const spans = textLayerDiv.querySelectorAll("span");
+          for (const span of spans) {
+            if (span.textContent.toLowerCase().includes(lower)) {
+              span.classList.add("highlight");
+              setTimeout(() => {
+                span.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 300);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    renderPDF(fileUrl, highlightQuery);
+  </script>
+</body>
+</html>

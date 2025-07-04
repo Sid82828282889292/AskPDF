@@ -1,19 +1,25 @@
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
-from utils.custom_hf_llm import HuggingFaceLLM
+from langchain.chains import RetrievalQA
+from langchain.llms import HuggingFacePipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from langchain_community.vectorstores import Chroma
 
-def create_qa_chain(vectorstore):
-    llm = HuggingFaceLLM()
+def load_local_llm():
+    model_id = "tiiuae/falcon-rw-1b"  # small model (~1.3B) suitable for CPU
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id)
 
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        return_messages=True
-    )
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=200)
+    llm = HuggingFacePipeline(pipeline=pipe)
+    return llm
 
-    qa_chain = ConversationalRetrievalChain.from_llm(
+def query_pdf(vectorstore: Chroma, question: str) -> str:
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    llm = load_local_llm()
+
+    qa = RetrievalQA.from_chain_type(
         llm=llm,
-        retriever=vectorstore.as_retriever(),
-        memory=memory
+        retriever=retriever,
+        return_source_documents=True
     )
-
-    return qa_chain
+    result = qa.invoke({"query": question})
+    return result["result"]
