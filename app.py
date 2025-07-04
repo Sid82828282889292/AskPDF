@@ -10,7 +10,7 @@
 
 # st.title("📄 Smart PDF Query App")
 
-# # Initialize session state
+# # Session for PDF list
 # if "pdfs" not in st.session_state:
 #     st.session_state.pdfs = {}
 
@@ -36,7 +36,7 @@
 
 #     st.success(f"✅ Uploaded and indexed: {uploaded_file.name}")
 
-# # PDF selection
+# # PDF selector
 # pdf_options = list(st.session_state.pdfs.items())
 # if pdf_options:
 #     selected_key, selected_pdf = st.selectbox(
@@ -48,17 +48,24 @@
 #     vectorstore = cache_utils.load_vectorstore(selected_key)
 #     question = st.text_input("🔍 Ask a question about this PDF")
 
-#     use_llm = st.toggle("💡 Use AI to summarize (LLM)", value=False)
+#     # Retrieval Mode
+#     mode = st.radio("🧠 Choose Answer Mode:", ["Raw Chunk", "Polished Chunk", "AI Summarized"])
 
 #     if question:
-#         if use_llm:
+#         if mode == "Raw Chunk":
+#             answer = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+#         elif mode == "Polished Chunk":
+#             raw = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+#             answer = qa_chain.polish_with_llm(raw, question)
+#         elif mode == "AI Summarized":
 #             answer = qa_chain.query_pdf_with_llm(vectorstore, question)
 #         else:
-#             answer = qa_chain.query_pdf_with_chunks_only(vectorstore, question)
+#             answer = "Invalid mode selected."
 
 #         st.markdown("### ✅ Answer")
 #         st.write(answer)
 
+#         # PDF highlight
 #         highlight = answer.split("\n")[0][:50].strip().replace(" ", "+")
 #         viewer_url = f"static/pdfjs/viewer.html?file=../../../cached/{selected_key}.pdf&highlight={highlight}"
 #         st.markdown(f"[📄 View PDF with Highlight]({viewer_url})", unsafe_allow_html=True)
@@ -69,14 +76,14 @@ import os
 from utils import auth, pdf_loader, chunk_embed, cache_utils, qa_chain
 from langchain_community.vectorstores import Chroma
 
-st.set_page_config(page_title="📄 Smart PDF Query", layout="wide")
+st.set_page_config(page_title="📄 Smart PDF Query App", layout="wide")
 
 if not auth.check_auth():
     st.stop()
 
-st.title("📄 Smart PDF Query App")
+st.title("📄 Smart PDF Query App (Local Mistral via Ollama)")
 
-# Session for PDF list
+# Session state for multiple PDFs
 if "pdfs" not in st.session_state:
     st.session_state.pdfs = {}
 
@@ -102,7 +109,7 @@ if uploaded_file:
 
     st.success(f"✅ Uploaded and indexed: {uploaded_file.name}")
 
-# PDF selector
+# PDF Selection
 pdf_options = list(st.session_state.pdfs.items())
 if pdf_options:
     selected_key, selected_pdf = st.selectbox(
@@ -114,7 +121,6 @@ if pdf_options:
     vectorstore = cache_utils.load_vectorstore(selected_key)
     question = st.text_input("🔍 Ask a question about this PDF")
 
-    # Retrieval Mode
     mode = st.radio("🧠 Choose Answer Mode:", ["Raw Chunk", "Polished Chunk", "AI Summarized"])
 
     if question:
@@ -126,12 +132,12 @@ if pdf_options:
         elif mode == "AI Summarized":
             answer = qa_chain.query_pdf_with_llm(vectorstore, question)
         else:
-            answer = "Invalid mode selected."
+            answer = "Invalid mode."
 
         st.markdown("### ✅ Answer")
         st.write(answer)
 
-        # PDF highlight
+        # Create PDF viewer link with highlight
         highlight = answer.split("\n")[0][:50].strip().replace(" ", "+")
         viewer_url = f"static/pdfjs/viewer.html?file=../../../cached/{selected_key}.pdf&highlight={highlight}"
         st.markdown(f"[📄 View PDF with Highlight]({viewer_url})", unsafe_allow_html=True)
