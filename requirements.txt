@@ -16,7 +16,5 @@ chromadb
 sentence-transformers
 scikit-learn
 PyMuPDF
-uvicorn
-fastapi
 transformers
 torch
